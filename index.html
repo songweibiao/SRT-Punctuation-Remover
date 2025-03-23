@@ -1,0 +1,1739 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="一个用于去除SRT字幕文件中标点符号的在线工具">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#1976d2">
+    <title>SRT字幕标点符号去除工具</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Microsoft YaHei", "Segoe UI", Roboto, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(to bottom, #f8f9fa, #edf2f7);
+            min-height: 100vh;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 10px 15px;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 8px 15px;
+            border-radius: 6px;
+            background-color: #fff;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+        }
+        .app-title {
+            color: #1976d2;
+            margin: 0;
+            font-size: 18px;
+            white-space: nowrap;
+        }
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .action-button {
+            display: flex;
+            align-items: center;
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: none;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            gap: 5px;
+        }
+        .process-btn {
+            background-color: #1976d2;
+            color: white;
+        }
+        .process-btn:hover {
+            background-color: #1565c0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .result-btn {
+            background-color: #5c6bc0;
+            color: white;
+        }
+        .result-btn:hover {
+            background-color: #3f51b5;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .clear-btn {
+            background-color: #f44336;
+            color: white;
+            padding: 6px 10px;
+        }
+        .clear-btn:hover {
+            background-color: #e53935;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .settings-button {
+            background-color: transparent;
+            color: #1976d2;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            transition: background-color 0.3s;
+            margin-left: 5px;
+        }
+        .settings-button:hover {
+            background-color: rgba(25, 118, 210, 0.1);
+        }
+        .settings-button.active {
+            background-color: rgba(25, 118, 210, 0.2);
+        }
+        .main-card {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 0;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+        }
+        .card-body {
+            padding: 15px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .subtitle-editor {
+            display: flex;
+            gap: 15px;
+            height: 100%;
+            flex: 1;
+            box-sizing: border-box;
+            width: 100%;
+            overflow: hidden;
+        }
+        .editor-column {
+            flex: 0 0 calc(50% - 7.5px); /* 精确计算宽度，考虑间隙 */
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            height: 100%;
+        }
+        .panel-header {
+            background-color: #edf2f7;
+            padding: 8px 12px;
+            border-radius: 4px 4px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+            font-size: 14px;
+            border-bottom: 1px solid #e1e7ef;
+            width: 100%;
+            box-sizing: border-box;
+            flex-shrink: 0;
+        }
+        .panel-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+            width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        .file-upload-label {
+            display: inline-flex;
+            align-items: center;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s ease;
+            border: 1px solid #bbdefb;
+            white-space: nowrap;
+            gap: 5px;
+        }
+        .file-upload-label:hover {
+            background-color: #bbdefb;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .selected-file {
+            font-size: 13px;
+            color: #546e7a;
+            background-color: #f5f5f5;
+            padding: 4px 8px;
+            border-radius: 4px;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            border: 1px solid #e0e0e0;
+        }
+        .file-input {
+            width: 0.1px;
+            height: 0.1px;
+            opacity: 0;
+            overflow: hidden;
+            position: absolute;
+            z-index: -1;
+        }
+        .drag-over {
+            border: 2px dashed #1976d2 !important;
+            background-color: rgba(25, 118, 210, 0.05);
+        }
+        .drop-message {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            font-weight: 500;
+            color: #1976d2;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .drop-message i {
+            display: block;
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        textarea.drag-over + .drop-message {
+            display: block;
+        }
+        textarea {
+            width: 100%;
+            height: 100%;
+            min-height: auto;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: none;
+            flex: 1;
+            transition: border-color 0.2s;
+            background-color: #fafbfc;
+            box-sizing: border-box;
+            overflow: auto;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #90caf9;
+        }
+        .process-complete {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1100;
+            animation: slideInRight 0.5s forwards, fadeOut 0.5s 2s forwards;
+        }
+        .complete-message {
+            background-color: #43a047;
+            color: white;
+            padding: 10px 16px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            font-size: 14px;
+        }
+        .complete-message i {
+            font-size: 18px;
+        }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        .hidden {
+            display: none;
+        }
+        /* 添加滚动条样式 */
+        textarea::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        textarea::-webkit-scrollbar-thumb {
+            background-color: #ccc;
+            border-radius: 4px;
+        }
+        
+        textarea::-webkit-scrollbar-thumb:hover {
+            background-color: #aaa;
+        }
+        
+        textarea::-webkit-scrollbar-track {
+            background-color: #f0f0f0;
+        }
+        
+        /* 右侧只读区域的特殊样式 */
+        textarea[readonly] {
+            background-color: #f8f9fa;
+            cursor: default;
+        }
+        
+        /* 添加可编辑区域的样式 - 与原始字幕内容保持一致 */
+        .editable-subtitle {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 2px 8px;
+            margin: 0;
+            background-color: #fff;
+            cursor: text;
+            min-height: 21px;
+            line-height: 1.5;
+        }
+        
+        .editable-subtitle:focus {
+            outline: none;
+            border-color: #90caf9;
+            box-shadow: 0 0 0 2px rgba(144, 202, 249, 0.25);
+        }
+        
+        .subtitle-block {
+            margin-bottom: 6px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .subtitle-number, .subtitle-timestamp {
+            background-color: #f0f0f0;
+            padding: 2px 8px;
+            font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+            color: #555;
+            border-radius: 2px;
+            margin-bottom: 1px;
+        }
+        
+        /* 编辑区域容器样式 */
+        .edited-content {
+            width: 100%;
+            height: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 14px;
+            line-height: 1.3;
+            background-color: #fafbfc;
+            box-sizing: border-box;
+            overflow: auto;
+        }
+        
+        /* 为编辑区域添加滚动条样式 */
+        .edited-content::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        .edited-content::-webkit-scrollbar-thumb {
+            background-color: #ccc;
+            border-radius: 4px;
+        }
+        
+        .edited-content::-webkit-scrollbar-thumb:hover {
+            background-color: #aaa;
+        }
+        
+        .edited-content::-webkit-scrollbar-track {
+            background-color: #f0f0f0;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                overflow: auto;
+                height: auto;
+            }
+            .app-container {
+                height: auto;
+                min-height: 100vh;
+                overflow: auto;
+            }
+            .main-card {
+                margin-bottom: 15px;
+            }
+            .subtitle-editor {
+                flex-direction: column;
+                height: auto;
+                gap: 15px;
+                min-height: 0;
+                flex: 1;
+                overflow: visible;
+            }
+            .editor-column {
+                width: 100%;
+                min-height: 250px;
+                flex: 0 0 auto;
+            }
+            .header {
+                flex-direction: column;
+                padding: 12px;
+            }
+            .app-title {
+                margin-bottom: 10px;
+            }
+            .header-actions {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+        }
+        
+        /* 标点符号配置弹窗 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+            animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .modal-content {
+            background-color: #fff;
+            margin: 50px auto;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            max-width: 700px;
+            width: 90%;
+            animation: slideIn 0.3s;
+        }
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .modal-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1976d2;
+            margin: 0;
+        }
+        .close-button {
+            color: #aaa;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+        .close-button:hover {
+            color: #555;
+        }
+        .section-title {
+            margin-bottom: 15px;
+            font-weight: 500;
+            color: #424242;
+        }
+        /* 标签样式重新设计 */
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 15px;
+            margin-bottom: 20px;
+            min-height: 46px;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        .punctuation-type {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        .punctuation-category {
+            font-weight: 500;
+            color: #1976d2;
+            background-color: #e3f2fd;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+        .punctuation-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 15px;
+            padding-left: 5px;
+        }
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            background-color: #e3f2fd;
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 15px;
+            color: #0277bd;
+            border: 1px solid #bbdefb;
+            position: relative;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .tag:hover {
+            background-color: #bbdefb;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .punctuation-symbol {
+            font-size: 18px;
+            font-weight: 500;
+            padding: 0 5px;
+        }
+        .tag-remove {
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 18px;
+            color: #0277bd;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            opacity: 0;
+            margin-left: 4px;
+            transition: opacity 0.2s ease;
+        }
+        .tag:hover .tag-remove {
+            opacity: 1;
+        }
+        .tag-remove:hover {
+            background-color: #90caf9;
+        }
+        .add-tag-form {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .add-tag-input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            text-align: center;
+        }
+        .punctuation-type-select {
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: white;
+            font-size: 14px;
+        }
+        .add-tag-button {
+            background-color: #1976d2;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            margin: 0;
+        }
+        .add-tag-button:hover {
+            background-color: #1565c0;
+        }
+        .modal-footer {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+        .reset-button {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .reset-button:hover {
+            background-color: #e53935;
+        }
+        .done-button {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .done-button:hover {
+            background-color: #43a047;
+        }
+        .highlighted-content {
+            width: 100%;
+            height: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 14px;
+            line-height: 1.3;
+            background-color: #fafbfc;
+            box-sizing: border-box;
+            overflow: auto;
+        }
+        
+        /* 为高亮内容添加滚动条样式 */
+        .highlighted-content::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        .highlighted-content::-webkit-scrollbar-thumb {
+            background-color: #ccc;
+            border-radius: 4px;
+        }
+        
+        .highlighted-content::-webkit-scrollbar-thumb:hover {
+            background-color: #aaa;
+        }
+        
+        .highlighted-content::-webkit-scrollbar-track {
+            background-color: #f0f0f0;
+        }
+        
+        /* 原始字幕内容块样式 - 与处理后的字幕样式保持一致 */
+        .original-subtitle-block {
+            margin-bottom: 6px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .original-subtitle-number, .original-subtitle-timestamp {
+            background-color: #f0f0f0;
+            padding: 2px 8px;
+            font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+            color: #555;
+            border-radius: 2px;
+            margin-bottom: 1px;
+        }
+        
+        .original-subtitle-text {
+            padding: 2px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #fff;
+            min-height: 21px;
+            line-height: 1.5;
+        }
+        .original-subtitle-text span.highlight {
+            background-color: #ffff00;
+            padding: 0 2px;
+            border-radius: 2px;
+            font-weight: bold;
+        }
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .notification.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <h1 class="app-title">SRT字幕标点符号去除工具</h1>
+            <div class="header-actions">
+                <label for="file-upload" class="file-upload-label" title="选择SRT文件">
+                    <i class="fas fa-file-upload"></i> 选择SRT文件
+                </label>
+                <input type="file" id="file-upload" accept=".srt" class="file-input" />
+                <span id="selected-file-name" class="selected-file hidden"></span>
+                <button id="clear-file" class="action-button clear-btn hidden" title="清除当前文件">
+                    <i class="fas fa-times"></i>
+                </button>
+                <button id="processButton" class="action-button process-btn" title="去除标点符号">
+                    <i class="fas fa-magic"></i> 去除标点符号
+                </button>
+                <button id="copyButton" class="action-button result-btn hidden" title="复制结果">
+                    <i class="fas fa-copy"></i> 复制结果
+                </button>
+                <button id="downloadButton" class="action-button result-btn hidden" title="下载SRT文件">
+                    <i class="fas fa-download"></i> 下载
+                </button>
+                <button id="settings-button" class="settings-button" title="标点符号配置">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="main-card">
+            <div class="card-body">
+                <!-- 左右布局的字幕编辑区域 -->
+                <div class="subtitle-editor">
+                    <!-- 左侧：原始字幕 -->
+                    <div class="editor-column">
+                        <div class="panel-header">
+                            <span>原始字幕内容</span>
+                        </div>
+                        <div class="panel-content">
+                            <textarea id="inputSrt" placeholder="在此粘贴SRT格式的字幕内容，或者拖放SRT文件到此处..."></textarea>
+                            <div class="drop-message">
+                                <i class="fas fa-file-import"></i>释放鼠标以导入SRT文件
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 右侧：处理后的字幕 -->
+                    <div class="editor-column">
+                        <div class="panel-header">
+                            <span>处理后的字幕内容</span>
+                        </div>
+                        <div class="panel-content">
+                            <textarea id="outputSrt" readonly placeholder="处理后的结果将显示在这里..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 处理完成提示 -->
+                <div class="process-complete hidden" id="process-complete">
+                    <div class="complete-message">
+                        <i class="fas fa-check-circle"></i>
+                        <span>处理完成</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 标点符号配置弹窗 -->
+    <div id="punctuation-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">标点符号配置</h2>
+                <button class="close-button">&times;</button>
+            </div>
+            
+            <div class="form-group">
+                <div class="section-title">选择要去除的标点符号：</div>
+                
+                <div id="tags-container" class="tags-container">
+                    <!-- 英文标点符号 -->
+                    <div class="punctuation-type">
+                        <div class="punctuation-category">英文标点</div>
+                        <div id="english-punctuations" class="punctuation-group">
+                            <!-- 英文标点符号标签将在这里动态生成 -->
+                        </div>
+                    </div>
+                    
+                    <!-- 中文标点符号 -->
+                    <div class="punctuation-type">
+                        <div class="punctuation-category">中文标点</div>
+                        <div id="chinese-punctuations" class="punctuation-group">
+                            <!-- 中文标点符号标签将在这里动态生成 -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="add-tag-form">
+                    <input type="text" id="new-tag-input" class="add-tag-input" placeholder="输入要添加的标点符号" maxlength="1">
+                    <select id="punctuation-type" class="punctuation-type-select" title="选择标点符号类型" aria-label="选择标点符号类型">
+                        <option value="english">英文标点</option>
+                        <option value="chinese">中文标点</option>
+                    </select>
+                    <button id="add-tag-button" class="add-tag-button">添加</button>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button id="reset-punctuations" class="reset-button">重置为默认</button>
+                <button class="done-button">完成</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取DOM元素
+            const inputSrt = document.getElementById('inputSrt');
+            const outputSrt = document.getElementById('outputSrt');
+            const processButton = document.getElementById('processButton');
+            const copyButton = document.getElementById('copyButton');
+            const downloadButton = document.getElementById('downloadButton');
+            const clearButton = document.getElementById('clear-file');
+            const settingsButton = document.getElementById('settings-button');
+            const englishPunctuationsContainer = document.getElementById('english-punctuations');
+            const chinesePunctuationsContainer = document.getElementById('chinese-punctuations');
+            const newTagInput = document.getElementById('new-tag-input');
+            const punctuationTypeSelect = document.getElementById('punctuation-type');
+            const addTagButton = document.getElementById('add-tag-button');
+            const resetPunctuationsButton = document.getElementById('reset-punctuations');
+            const punctuationModal = document.getElementById('punctuation-modal');
+            const selectedFileName = document.getElementById('selected-file-name');
+            
+            // 全局变量
+            let originalFileName = '';
+            let fileNameText = '';
+            let isScrolling = false; // 防止无限循环滚动
+            let scrollTimeout; // 用于节流滚动事件
+            
+            // 智能同步滚动函数
+            function syncScroll(source, target) {
+                if (isScrolling) return;
+                
+                isScrolling = true;
+                clearTimeout(scrollTimeout);
+                
+                // 计算滚动百分比
+                const scrollPercentage = source.scrollTop / (source.scrollHeight - source.clientHeight);
+                
+                // 检查目标是否有足够的内容可滚动
+                if (target.scrollHeight > target.clientHeight) {
+                    // 设置目标的滚动位置
+                    target.scrollTop = scrollPercentage * (target.scrollHeight - target.clientHeight);
+                }
+                
+                // 添加小延迟以防止滚动事件频繁触发
+                scrollTimeout = setTimeout(() => {
+                    isScrolling = false;
+                }, 20);
+            }
+            
+            // 监听左侧文本框的滚动事件
+            inputSrt.addEventListener('scroll', function() {
+                syncScroll(this, outputSrt);
+            });
+            
+            // 监听右侧文本框的滚动事件
+            outputSrt.addEventListener('scroll', function() {
+                syncScroll(this, inputSrt);
+            });
+            
+            // 监听文本变化
+            inputSrt.addEventListener('input', function() {
+                // 如果右侧已有内容，则可能需要重新同步滚动位置
+                if (outputSrt.value) {
+                    // 简单重置滚动位置，或者根据当前滚动百分比同步
+                    const scrollPercentage = this.scrollTop / (this.scrollHeight - this.clientHeight);
+                    if (!isNaN(scrollPercentage) && isFinite(scrollPercentage)) {
+                        outputSrt.scrollTop = scrollPercentage * (outputSrt.scrollHeight - outputSrt.clientHeight);
+                    }
+                }
+            });
+            
+            // 首次加载时触发一次滚动同步
+            window.addEventListener('load', function() {
+                // 确保两个区域初始滚动位置为0
+                inputSrt.scrollTop = 0;
+                outputSrt.scrollTop = 0;
+                
+                // 清除旧的配置，使用新的默认配置
+                // 如果要保持用户的自定义配置，可以注释掉下面这行
+                localStorage.removeItem(STORAGE_KEY);
+            });
+            
+            // 本地存储键名
+            const STORAGE_KEY = 'srt_punctuation_remover_config';
+            
+            // 默认标点符号
+            const defaultPunctuations = {
+                english: [
+                    { symbol: '{', description: '左花括号' },
+                    { symbol: '}', description: '右花括号' }
+                ],
+                chinese: [
+                    { symbol: '，', description: '中文逗号' },
+                    { symbol: '。', description: '中文句号' },
+                    { symbol: '？', description: '中文问号' },
+                    { symbol: '！', description: '中文感叹号' },
+                    { symbol: '（', description: '中文左括号' },
+                    { symbol: '）', description: '中文右括号' },
+                    { symbol: '《', description: '中文左书名号' },
+                    { symbol: '》', description: '中文右书名号' },
+                    { symbol: '「', description: '中文左引号' },
+                    { symbol: '」', description: '中文右引号' },
+                    { symbol: '\u201c', description: '中文左双引号' },
+                    { symbol: '\u201d', description: '中文右双引号' },
+                    { symbol: '\u2018', description: '中文左单引号' },
+                    { symbol: '\u2019', description: '中文右单引号' },
+                    { symbol: '：', description: '中文冒号' },
+                    { symbol: '；', description: '中文分号' },
+                    { symbol: '、', description: '中文顿号' },
+                    { symbol: '—', description: '破折号' },
+                    { symbol: '…', description: '省略号' },
+                    { symbol: '【', description: '中文左方括号' },
+                    { symbol: '】', description: '中文右方括号' }
+                ]
+            };
+            
+            // 当前选中的标点符号
+            const selectedPunctuations = new Set();
+            
+            // 打开标点符号配置弹窗
+            settingsButton.addEventListener('click', function() {
+                punctuationModal.style.display = 'block';
+                settingsButton.classList.add('active');
+            });
+            
+            // 关闭弹窗
+            const closeButtons = document.querySelectorAll('.close-button, .done-button');
+            closeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    punctuationModal.style.display = 'none';
+                    settingsButton.classList.remove('active');
+                });
+            });
+            
+            // 点击弹窗外部关闭
+            window.addEventListener('click', function(event) {
+                if (event.target == punctuationModal) {
+                    punctuationModal.style.display = 'none';
+                    settingsButton.classList.remove('active');
+                }
+            });
+            
+            // 判断符号是英文还是中文标点
+            function isPunctuationChinese(symbol) {
+                // 尝试从默认标点列表中查找
+                const isInEnglishDefaults = defaultPunctuations.english.some(p => p.symbol === symbol);
+                const isInChineseDefaults = defaultPunctuations.chinese.some(p => p.symbol === symbol);
+                
+                if (isInEnglishDefaults) return false;
+                if (isInChineseDefaults) return true;
+                
+                // 如果不在默认列表中，则通过Unicode范围判断
+                const code = symbol.charCodeAt(0);
+                return code > 255; // 简单判断：大于255的Unicode码点通常是中文字符
+            }
+            
+            // 保存配置到本地存储
+            function saveConfiguration() {
+                // 将当前选择的标点符号分为英文和中文两类
+                const englishPuncts = [];
+                const chinesePuncts = [];
+                
+                Array.from(selectedPunctuations).forEach(symbol => {
+                    const isChinese = isPunctuationChinese(symbol);
+                    const category = isChinese ? 'chinese' : 'english';
+                    const defaultList = defaultPunctuations[category];
+                    const defaultPunct = defaultList.find(p => p.symbol === symbol);
+                    
+                    const punctData = {
+                        symbol: symbol,
+                        description: defaultPunct ? defaultPunct.description : undefined,
+                        type: category
+                    };
+                    
+                    if (isChinese) {
+                        chinesePuncts.push(punctData);
+                    } else {
+                        englishPuncts.push(punctData);
+                    }
+                });
+                
+                const config = {
+                    punctuations: {
+                        english: englishPuncts,
+                        chinese: chinesePuncts
+                    }
+                };
+                
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+            }
+            
+            // 从本地存储加载配置
+            function loadConfiguration() {
+                try {
+                    const configJson = localStorage.getItem(STORAGE_KEY);
+                    if (configJson) {
+                        const config = JSON.parse(configJson);
+                        
+                        // 清空当前选择
+                        selectedPunctuations.clear();
+                        englishPunctuationsContainer.innerHTML = '';
+                        chinesePunctuationsContainer.innerHTML = '';
+                        
+                        // 检查是新版还是旧版配置格式
+                        if (config.punctuations && typeof config.punctuations === 'object' && config.punctuations.english) {
+                            // 新版格式：分类的标点符号
+                            // 添加英文标点符号
+                            if (Array.isArray(config.punctuations.english)) {
+                                config.punctuations.english.forEach(punct => {
+                                    if (punct.symbol) {
+                                        addTagToContainer(punct.symbol, punct.description, 'english');
+                                        selectedPunctuations.add(punct.symbol);
+                                    }
+                                });
+                            }
+                            
+                            // 添加中文标点符号
+                            if (Array.isArray(config.punctuations.chinese)) {
+                                config.punctuations.chinese.forEach(punct => {
+                                    if (punct.symbol) {
+                                        addTagToContainer(punct.symbol, punct.description, 'chinese');
+                                        selectedPunctuations.add(punct.symbol);
+                                    }
+                                });
+                            }
+                            
+                            return true;
+                        } else if (config.punctuations && Array.isArray(config.punctuations)) {
+                            // 旧版格式：未分类的标点符号列表
+                            config.punctuations.forEach(punct => {
+                                if (punct.symbol) {
+                                    const type = isPunctuationChinese(punct.symbol) ? 'chinese' : 'english';
+                                    addTagToContainer(punct.symbol, punct.description, type);
+                                    selectedPunctuations.add(punct.symbol);
+                                }
+                            });
+                            
+                            // 保存为新格式
+                            saveConfiguration();
+                            return true;
+                        }
+                    }
+                    return false;
+                } catch (e) {
+                    console.error('加载配置失败:', e);
+                    return false;
+                }
+            }
+            
+            // 初始化标点符号标签
+            function initializeTags() {
+                // 检查容器元素是否存在
+                if (!englishPunctuationsContainer) {
+                    console.error('英文标点符号容器不存在');
+                    return;
+                }
+                if (!chinesePunctuationsContainer) {
+                    console.error('中文标点符号容器不存在');
+                    return;
+                }
+                
+                // 尝试从本地存储加载配置
+                const configLoaded = loadConfiguration();
+                
+                // 如果没有加载到配置或加载失败，则使用默认配置
+                if (!configLoaded) {
+                    // 先清空容器
+                    englishPunctuationsContainer.innerHTML = '';
+                    chinesePunctuationsContainer.innerHTML = '';
+                    selectedPunctuations.clear();
+                    
+                    // 添加默认英文标点符号
+                    defaultPunctuations.english.forEach(punct => {
+                        addTagToContainer(punct.symbol, punct.description, 'english');
+                        selectedPunctuations.add(punct.symbol);
+                    });
+                    
+                    // 添加默认中文标点符号
+                    defaultPunctuations.chinese.forEach(punct => {
+                        addTagToContainer(punct.symbol, punct.description, 'chinese');
+                        selectedPunctuations.add(punct.symbol);
+                    });
+                    
+                    // 保存默认配置
+                    saveConfiguration();
+                    
+                    // 显示配置更新提示（可选）
+                    console.log('已加载更新后的默认标点符号配置');
+                }
+            }
+            
+            // 添加标签到容器
+            function addTagToContainer(symbol, description, type) {
+                const container = type === 'chinese' ? chinesePunctuationsContainer : englishPunctuationsContainer;
+                
+                const tag = document.createElement('div');
+                tag.className = 'tag';
+                tag.setAttribute('data-symbol', symbol);
+                tag.setAttribute('data-type', type);
+                tag.title = description || symbol;
+                
+                const symbolSpan = document.createElement('span');
+                symbolSpan.className = 'punctuation-symbol';
+                symbolSpan.textContent = symbol;
+                tag.appendChild(symbolSpan);
+                
+                const removeButton = document.createElement('span');
+                removeButton.className = 'tag-remove';
+                removeButton.innerHTML = '×';
+                removeButton.title = '删除';
+                
+                // 点击标签的任何地方都能删除，但有两个不同的处理方式
+                tag.addEventListener('click', function(e) {
+                    // 如果点击的是删除按钮，或者标签本身（但不是在点击删除按钮的情况下）
+                    if (e.target === removeButton || e.target === tag) {
+                        tag.remove();
+                        selectedPunctuations.delete(symbol);
+                        // 保存更新后的配置
+                        saveConfiguration();
+                    }
+                });
+                
+                tag.appendChild(removeButton);
+                container.appendChild(tag);
+            }
+            
+            // 添加新标点符号
+            function addNewTag() {
+                const symbol = newTagInput.value.trim();
+                if (symbol) {
+                    if (selectedPunctuations.has(symbol)) {
+                        alert(`标点符号 "${symbol}" 已存在`);
+                    } else {
+                        // 获取选择的类型
+                        const type = punctuationTypeSelect.value;
+                        addTagToContainer(symbol, null, type);
+                        selectedPunctuations.add(symbol);
+                        newTagInput.value = '';
+                        // 保存更新后的配置
+                        saveConfiguration();
+                    }
+                }
+            }
+            
+            // 重置为默认标点符号
+            function resetToDefaultPunctuations() {
+                if (confirm('确定要重置为默认标点符号吗？这将使用系统预设的标点符号设置替换您自定义的内容。')) {
+                    // 清空当前选择
+                    selectedPunctuations.clear();
+                    englishPunctuationsContainer.innerHTML = '';
+                    chinesePunctuationsContainer.innerHTML = '';
+                    
+                    // 添加默认英文标点符号
+                    defaultPunctuations.english.forEach(punct => {
+                        addTagToContainer(punct.symbol, punct.description, 'english');
+                        selectedPunctuations.add(punct.symbol);
+                    });
+                    
+                    // 添加默认中文标点符号
+                    defaultPunctuations.chinese.forEach(punct => {
+                        addTagToContainer(punct.symbol, punct.description, 'chinese');
+                        selectedPunctuations.add(punct.symbol);
+                    });
+                    
+                    // 保存更新后的配置
+                    saveConfiguration();
+                    
+                    // 提示用户已重置为最新默认配置
+                    alert('已重置为默认标点符号配置');
+                }
+            }
+            
+            // 添加标签按钮点击事件
+            addTagButton.addEventListener('click', addNewTag);
+            
+            // 重置按钮点击事件
+            resetPunctuationsButton.addEventListener('click', resetToDefaultPunctuations);
+            
+            // 输入框回车事件
+            newTagInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addNewTag();
+                    e.preventDefault();
+                }
+            });
+            
+            // 清除文件按钮事件
+            clearButton.addEventListener('click', function() {
+                inputSrt.value = '';
+                outputSrt.value = '';
+                
+                // 删除高亮内容（如果有）
+                const existingHighlight = document.querySelector('.highlighted-content');
+                if (existingHighlight) {
+                    existingHighlight.remove();
+                }
+                
+                // 删除可编辑内容（如果有）
+                const editedOutput = document.getElementById('edited-output');
+                if (editedOutput) {
+                    editedOutput.remove();
+                }
+                
+                // 确保输入框可见
+                inputSrt.style.display = 'block';
+                outputSrt.style.display = 'block';
+                
+                // 重置滚动位置
+                inputSrt.scrollTop = 0;
+                outputSrt.scrollTop = 0;
+                
+                selectedFileName.textContent = '';
+                selectedFileName.classList.add('hidden');
+                clearButton.classList.add('hidden');
+                originalFileName = '';
+                fileNameText = '';
+                
+                // 隐藏结果按钮
+                copyButton.classList.add('hidden');
+                downloadButton.classList.add('hidden');
+            });
+            
+            // 增强的文件处理函数
+            function handleFile(file) {
+                if (!file) return;
+                
+                // 检查文件扩展名
+                if (!file.name.toLowerCase().endsWith('.srt')) {
+                    alert('请选择SRT格式的字幕文件！');
+                    return;
+                }
+                
+                // 保存原始文件名（去除扩展名）用于下载
+                originalFileName = file.name.replace(/\.srt$/i, '');
+                
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    inputSrt.value = event.target.result;
+                    
+                    // 重置滚动位置
+                    inputSrt.scrollTop = 0;
+                    outputSrt.scrollTop = 0;
+                    
+                    // 显示文件名
+                    const fileName = file.name.length > 20 ? file.name.substring(0, 17) + '...' : file.name;
+                    selectedFileName.textContent = fileName;
+                    fileNameText = fileName;
+                    selectedFileName.classList.remove('hidden');
+                    clearButton.classList.remove('hidden');
+                };
+                reader.onerror = function() {
+                    alert('读取文件时发生错误，请重试！');
+                };
+                reader.readAsText(file); // 以文本形式读取
+            }
+
+            // 文件选择处理事件
+            document.getElementById('file-upload').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                handleFile(file);
+            });
+            
+            // 添加拖放功能
+            inputSrt.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.classList.add('drag-over');
+            });
+            
+            inputSrt.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.classList.remove('drag-over');
+            });
+            
+            inputSrt.addEventListener('drop', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.classList.remove('drag-over');
+                
+                const file = e.dataTransfer.files[0];
+                handleFile(file);
+            });
+            
+            // 处理按钮点击事件
+            processButton.addEventListener('click', function() {
+                if (!inputSrt.value.trim()) {
+                    alert('请先粘贴SRT字幕内容或选择SRT文件！');
+                    return;
+                }
+                
+                // 收集选中的标点符号
+                const punctuations = Array.from(selectedPunctuations);
+                
+                // 开始处理
+                const startTime = performance.now();
+                
+                // 清除之前的高亮内容
+                const existingHighlight = document.querySelector('.highlighted-content');
+                if (existingHighlight) {
+                    existingHighlight.remove();
+                }
+                
+                // 清除之前的结构化输出内容
+                const editedOutput = document.getElementById('edited-output');
+                if (editedOutput) {
+                    editedOutput.remove();
+                }
+                
+                // 确保输入框可见
+                inputSrt.style.display = 'block';
+                outputSrt.style.display = 'block';
+                
+                // 调用处理函数
+                const result = processSrtContent(inputSrt.value, punctuations);
+                
+                // 显示处理完成提示，2.5秒后自动消失
+                document.getElementById('process-complete').classList.remove('hidden');
+                setTimeout(function() {
+                    document.getElementById('process-complete').classList.add('hidden');
+                }, 2500);
+                
+                // 显示复制和下载按钮
+                copyButton.classList.remove('hidden');
+                downloadButton.classList.remove('hidden');
+            });
+            
+            // 复制结果到剪贴板
+            function copyResult() {
+                // 检查是否有编辑后的结构化内容
+                const editedContent = document.getElementById('edited-output');
+                if (editedContent) {
+                    // 从结构化内容中提取文本
+                    let content = '';
+                    const subtitleBlocks = editedContent.querySelectorAll('.subtitle-block');
+                    
+                    subtitleBlocks.forEach((block, index) => {
+                        const number = block.querySelector('.subtitle-number').textContent;
+                        const timestamp = block.querySelector('.subtitle-timestamp').textContent;
+                        const text = block.querySelector('.editable-subtitle').textContent;
+                        
+                        content += `${number}\n${timestamp}\n${text}`;
+                        if (index < subtitleBlocks.length - 1) {
+                            content += '\n\n';
+                        }
+                    });
+                    
+                    // 创建临时文本区域用于复制
+                    const tempTextarea = document.createElement('textarea');
+                    tempTextarea.value = content;
+                    document.body.appendChild(tempTextarea);
+                    tempTextarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(tempTextarea);
+                } else {
+                    // 否则使用原始的outputSrt
+                    outputSrt.select();
+                    document.execCommand('copy');
+                }
+                
+                // 显示复制成功的提示
+                showNotification('已复制到剪贴板');
+            }
+            
+            // 下载处理后的SRT文件
+            function downloadSrt() {
+                // 获取文件名（如果有上传文件就使用原文件名，否则使用默认名称）
+                let fileName = 'qbd_subtitle.srt';
+                if (fileNameText) {
+                    fileName = `qbd_${fileNameText}`;
+                }
+                
+                // 检查是否有编辑后的结构化内容
+                const editedContent = document.getElementById('edited-output');
+                let content = '';
+                
+                if (editedContent) {
+                    // 从结构化内容中提取文本
+                    const subtitleBlocks = editedContent.querySelectorAll('.subtitle-block');
+                    
+                    subtitleBlocks.forEach((block, index) => {
+                        const number = block.querySelector('.subtitle-number').textContent;
+                        const timestamp = block.querySelector('.subtitle-timestamp').textContent;
+                        const text = block.querySelector('.editable-subtitle').textContent;
+                        
+                        content += `${number}\n${timestamp}\n${text}`;
+                        if (index < subtitleBlocks.length - 1) {
+                            content += '\n\n';
+                        }
+                    });
+                } else {
+                    // 否则使用原始的outputSrt
+                    content = outputSrt.value;
+                }
+                
+                // 创建Blob对象
+                const blob = new Blob([content], {type: 'text/plain;charset=utf-8'});
+                
+                // 创建下载链接
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = fileName;
+                
+                // 添加到文档并触发点击
+                document.body.appendChild(link);
+                link.click();
+                
+                // 清理
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+                
+                // 显示下载成功的提示
+                showNotification('文件下载成功');
+            }
+            
+            // 处理SRT内容的函数
+            function processSrtContent(content, punctuations) {
+                // 按空行分割字幕块
+                const blocks = content.split('\n\n');
+                const processedBlocks = [];
+                let totalBlocks = 0;
+                let processedBlocksCount = 0;
+                let totalPunctuationsRemoved = 0;
+                
+                // 创建高亮显示的原始内容
+                let highlightedContent = '';
+                
+                // 为可编辑结果创建内容
+                let editableContent = '';
+                
+                // 为原始字幕创建结构化内容
+                let originalStructuredContent = '';
+                
+                // 从最长的标点符号开始处理，避免替换冲突
+                const sortedPunctuations = [...punctuations].sort((a, b) => b.length - a.length);
+                
+                for (const block of blocks) {
+                    if (!block.trim()) {
+                        continue;
+                    }
+                    
+                    totalBlocks++;
+                    
+                    // 按行分割
+                    const lines = block.split('\n');
+                    if (lines.length < 3) {
+                        // 跳过不完整的字幕块
+                        processedBlocks.push(block);
+                        highlightedContent += block + '\n\n';
+                        continue;
+                    }
+                    
+                    // 第一行是序号，第二行是时间戳
+                    const subtitleNumber = lines[0];
+                    const timestamp = lines[1];
+                    
+                    // 第三行及以后是字幕文本
+                    const subtitleText = lines.slice(2).join('\n');
+                    
+                    // 统计原文本中的标点符号数量
+                    let punctuationCount = 0;
+                    
+                    // 创建高亮版本的字幕文本
+                    let highlightedText = subtitleText;
+                    
+                    for (const punct of sortedPunctuations) {
+                        const regex = new RegExp(escapeRegExp(punct), 'g');
+                        const matches = subtitleText.match(regex);
+                        if (matches) {
+                            punctuationCount += matches.length;
+                        }
+                        
+                        // 为高亮版本添加美观的高亮样式
+                        highlightedText = highlightedText.replace(regex, `<span class="highlight">${punct}</span>`);
+                    }
+                    
+                    // 创建结构化的原始字幕块，保持与右侧处理后字幕内容一致的样式
+                    originalStructuredContent += `<div class="original-subtitle-block" data-index="${totalBlocks}">
+                        <div class="original-subtitle-number">${subtitleNumber}</div>
+                        <div class="original-subtitle-timestamp">${timestamp}</div>
+                        <div class="original-subtitle-text">${highlightedText}</div>
+                    </div>`;
+                    
+                    // 替换标点符号
+                    let processedText = subtitleText;
+                    for (const punct of sortedPunctuations) {
+                        const regex = new RegExp(escapeRegExp(punct), 'g');
+                        processedText = processedText.replace(regex, ' ');
+                    }
+                    
+                    // 删除句尾空格
+                    // 首先按行分割处理后的文本
+                    let processedLines = processedText.split('\n');
+                    processedLines = processedLines.map(line => {
+                        // 去除每行末尾的空格
+                        return line.replace(/\s+$/g, '');
+                    });
+                    // 重新组合文本
+                    processedText = processedLines.join('\n');
+                    
+                    totalPunctuationsRemoved += punctuationCount;
+                    processedBlocksCount++;
+                    
+                    // 组合处理后的字幕块
+                    const processedBlock = `${subtitleNumber}\n${timestamp}\n${processedText}`;
+                    processedBlocks.push(processedBlock);
+                    
+                    // 组合高亮显示的字幕块（用于兼容旧版本）
+                    highlightedContent += `${subtitleNumber}\n${timestamp}\n${highlightedText}\n\n`;
+                    
+                    // 创建可编辑版本的字幕块
+                    editableContent += `<div class="subtitle-block" data-index="${totalBlocks}">
+                        <div class="subtitle-number">${subtitleNumber}</div>
+                        <div class="subtitle-timestamp">${timestamp}</div>
+                        <div class="editable-subtitle" contenteditable="true">${processedText}</div>
+                    </div>`;
+                }
+                
+                // 将处理后的字幕块组合成完整文件内容
+                const processedContent = processedBlocks.join('\n\n');
+                
+                // 将原始文本暂时隐藏，显示结构化版本
+                const inputTextarea = document.getElementById('inputSrt');
+                inputTextarea.style.display = 'none';
+                const originalStructuredDiv = document.createElement('div');
+                originalStructuredDiv.className = 'highlighted-content';
+                originalStructuredDiv.style.backgroundColor = '#fafbfc'; // 确保背景色一致
+                originalStructuredDiv.innerHTML = originalStructuredContent;
+                inputTextarea.parentNode.insertBefore(originalStructuredDiv, inputTextarea);
+                
+                // 将右侧处理结果改为可编辑的结构化内容
+                const outputSrt = document.getElementById('outputSrt');
+                outputSrt.style.display = 'none';
+                const editedDiv = document.createElement('div');
+                editedDiv.id = 'edited-output';
+                editedDiv.className = 'edited-content';
+                editedDiv.innerHTML = editableContent;
+                outputSrt.parentNode.insertBefore(editedDiv, outputSrt);
+                
+                // 添加高亮区域的滚动同步功能
+                originalStructuredDiv.addEventListener('scroll', function() {
+                    if (isScrolling) return;
+                    
+                    isScrolling = true;
+                    clearTimeout(scrollTimeout);
+                    
+                    // 计算滚动百分比
+                    const scrollPercentage = this.scrollTop / (this.scrollHeight - this.clientHeight);
+                    
+                    // 检查目标是否有足够的内容可滚动
+                    const editedOutput = document.getElementById('edited-output');
+                    if (editedOutput && editedOutput.scrollHeight > editedOutput.clientHeight) {
+                        // 设置目标的滚动位置
+                        editedOutput.scrollTop = scrollPercentage * (editedOutput.scrollHeight - editedOutput.clientHeight);
+                    } else if (outputSrt.scrollHeight > outputSrt.clientHeight) {
+                        // 兼容原始输出
+                        outputSrt.scrollTop = scrollPercentage * (outputSrt.scrollHeight - outputSrt.clientHeight);
+                    }
+                    
+                    // 添加小延迟以防止滚动事件频繁触发
+                    scrollTimeout = setTimeout(() => {
+                        isScrolling = false;
+                    }, 20);
+                });
+                
+                // 为编辑区域添加滚动事件
+                const editedOutput = document.getElementById('edited-output');
+                if (editedOutput) {
+                    editedOutput.addEventListener('scroll', function() {
+                        if (isScrolling) return;
+                        
+                        isScrolling = true;
+                        clearTimeout(scrollTimeout);
+                        
+                        // 计算滚动百分比
+                        const scrollPercentage = this.scrollTop / (this.scrollHeight - this.clientHeight);
+                        
+                        // 确定同步目标：如果高亮内容存在则使用高亮内容，否则使用原始文本区域
+                        const scrollTarget = document.querySelector('.highlighted-content') || inputSrt;
+                        
+                        // 检查目标是否有足够的内容可滚动
+                        if (scrollTarget.scrollHeight > scrollTarget.clientHeight) {
+                            // 设置目标的滚动位置
+                            scrollTarget.scrollTop = scrollPercentage * (scrollTarget.scrollHeight - scrollTarget.clientHeight);
+                        }
+                        
+                        // 添加小延迟以防止滚动事件频繁触发
+                        scrollTimeout = setTimeout(() => {
+                            isScrolling = false;
+                        }, 20);
+                    });
+                }
+                
+                return {
+                    processedContent,
+                    totalBlocks,
+                    processedBlocks: processedBlocksCount,
+                    punctuationsRemoved: totalPunctuationsRemoved,
+                    highlightedContent
+                };
+            }
+            
+            // 辅助函数：转义正则表达式中的特殊字符
+            function escapeRegExp(string) {
+                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            }
+            
+            // 初始化
+            initializeTags();
+            
+            // 添加对整个文档的拖放支持
+            document.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+            
+            document.addEventListener('drop', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // 仅处理文件拖放，如果拖放到文本区域之外
+                if (e.target !== inputSrt) {
+                    const file = e.dataTransfer.files[0];
+                    if (file) {
+                        handleFile(file);
+                    }
+                }
+            });
+            
+            // 显示通知的函数
+            function showNotification(message) {
+                // 检查是否已有通知元素
+                let notification = document.querySelector('.notification');
+                
+                if (!notification) {
+                    // 创建通知元素
+                    notification = document.createElement('div');
+                    notification.className = 'notification';
+                    document.body.appendChild(notification);
+                }
+                
+                // 设置消息内容
+                notification.textContent = message;
+                
+                // 显示通知
+                notification.classList.add('show');
+                
+                // 2秒后隐藏通知
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 2000);
+            }
+            
+            // 复制按钮点击事件
+            copyButton.addEventListener('click', copyResult);
+            
+            // 下载按钮点击事件
+            downloadButton.addEventListener('click', downloadSrt);
+
+            // 点击清除按钮的处理
+            clearButton.addEventListener('click', function() {
+                // 确认清除
+                if (confirm('确定要清除所有内容吗？')) {
+                    clearAllContent();
+                }
+            });
+            
+            // 清除所有编辑区域
+            function clearAllContent() {
+                // 清除输入框
+                inputSrt.value = '';
+                
+                // 清除输出框
+                outputSrt.value = '';
+                
+                // 清除结构化的高亮内容
+                const existingHighlight = document.querySelector('.highlighted-content');
+                if (existingHighlight) {
+                    existingHighlight.remove();
+                }
+                
+                // 清除结构化输出内容
+                const editedOutput = document.getElementById('edited-output');
+                if (editedOutput) {
+                    editedOutput.remove();
+                }
+                
+                // 显示原始输入框和输出框
+                inputSrt.style.display = 'block';
+                outputSrt.style.display = 'block';
+                
+                // 重置滚动位置
+                inputSrt.scrollTop = 0;
+                outputSrt.scrollTop = 0;
+                
+                // 隐藏"处理完成"提示
+                document.getElementById('process-complete').classList.add('hidden');
+                
+                // 隐藏复制和下载按钮
+                copyButton.classList.add('hidden');
+                downloadButton.classList.add('hidden');
+                
+                // 清除统计信息
+                totalPunctuationsRemoved = 0;
+                processedBlocksCount = 0;
+                
+                // 重置文件选择
+                document.getElementById('file-upload').value = '';
+                fileNameText = '';
+                selectedFileName.textContent = '未选择文件';
+                selectedFileName.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html> 
